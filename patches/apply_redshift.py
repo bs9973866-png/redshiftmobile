@@ -1582,6 +1582,8 @@ public final class RedshiftPerformanceEngine {
                 combined.success = true;
                 final int installCount = combined.modsToInstall.size() + combined.dependenciesToInstall.size();
                 final int skippedCount = skipped.size();
+                if (installCount == 0) throw new Exception("Нет новых модов для установки");
+                File backupDir = backupMods(profile, profileId, mcVersion, loader, mode);
                 SingleModInstaller.installModWithDependencies(combined, profileId,
                     () -> Tools.runOnUiThread(() -> Toast.makeText(context,
                         "Готово: установлено " + installCount + " модов" +
@@ -1595,6 +1597,44 @@ public final class RedshiftPerformanceEngine {
                 Tools.runOnUiThread(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private static File backupMods(MinecraftProfile profile, String profileId, String mcVersion, String loader, int mode) throws IOException {
+        File gameDir = Tools.getGameDirPath(profile);
+        File modsDir = new File(gameDir, "mods");
+        File backupDir = new File(new File(gameDir, ".redshift-backups"), "performance-" + System.currentTimeMillis());
+        if (!backupDir.mkdirs() && !backupDir.isDirectory()) throw new IOException("Не удалось создать папку резервной копии");
+        File backupMods = new File(backupDir, "mods");
+        if (modsDir.isDirectory()) {
+            File[] files = modsDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".jar")) {
+                        copyFile(file, new File(backupMods, file.getName()));
+                    }
+                }
+            }
+        }
+        File manifest = new File(backupDir, "REDSHIFT-backup.txt");
+        try (FileOutputStream output = new FileOutputStream(manifest)) {
+            String data = "REDSHIFT Performance Engine backup\\nProfile: " + profileId +
+                "\\nMinecraft: " + mcVersion + "\\nLoader: " + loader +
+                "\\nMode: " + mode + "\\nCreated: " + new java.util.Date() +
+                "\\nRestore: copy files from mods/ back into the profile mods directory.";
+            output.write(data.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
+        return backupDir;
+    }
+
+    private static void copyFile(File source, File destination) throws IOException {
+        File parent = destination.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) throw new IOException("Не удалось создать папку резервной копии");
+        try (FileInputStream input = new FileInputStream(source);
+             FileOutputStream output = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+        }
     }
 
     private static List<String> projectsFor(String loader, int mode) {
