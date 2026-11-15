@@ -2040,8 +2040,6 @@ if "RedshiftPerformanceEngine.show" not in main_source:
                     net.kdt.pojavlaunch.performance.RedshiftPerformanceEngine.showInstanceHub(requireContext(), selectedProfile);
                 }
             });
-                }
-            });
         }"""
     if marker not in main_source:
         raise RuntimeError("Could not attach Performance Engine click handler")
