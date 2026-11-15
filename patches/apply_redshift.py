@@ -1163,3 +1163,329 @@ modloader_selector = r"""<?xml version="1.0" encoding="utf-8"?>
 (RES / "layout/fragment_modloader_select.xml").write_text(modloader_selector, encoding="utf-8")
 
 print("REDSHIFT identity and mod-loader selection screens redesigned with preserved upstream action IDs.")
+
+
+# === REDSHIFT profile workshop: rebuild profile editor into grouped instance settings ===
+profile_editor = r"""<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_app">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="false"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="18dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSTANCE WORKSHOP"
+                android:textColor="#FFFF637C"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.17" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Настройка сборки"
+                android:textColor="#FFFFF5F7"
+                android:textSize="25sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:text="Профиль, среда запуска и параметры Minecraft в одном месте."
+                android:textColor="#FFB9AAB0"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_redshift_hero"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <ImageView
+                    android:id="@+id/vprof_editor_profile_icon"
+                    android:layout_width="58dp"
+                    android:layout_height="58dp"
+                    android:layout_gravity="center_horizontal"
+                    android:contentDescription="Иконка профиля"
+                    android:src="@drawable/ic_redshift_mark" />
+
+                <TextView
+                    android:id="@+id/vprof_editor_profile_name_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/profiles_profile_name"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+
+                <EditText
+                    android:id="@+id/vprof_editor_profile_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_redshift_surface"
+                    android:hint="@string/unnamed"
+                    android:inputType="textPersonName"
+                    android:paddingHorizontal="13dp"
+                    android:textColor="#FFFFF5F7"
+                    android:textColorHint="#FF76656D"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="ИГРОВАЯ СБОРКА"
+                android:textColor="#FFFF637C"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.14" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="9dp"
+                android:background="@drawable/bg_redshift_surface"
+                android:orientation="vertical"
+                android:padding="13dp">
+
+                <TextView
+                    android:id="@+id/textView4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/profiles_profile_version"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/vprof_editor_version_spinner"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_redshift_hero"
+                        android:gravity="center_vertical"
+                        android:hint="@string/version_select_hint"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="#FFFFF5F7"
+                        android:textSize="13sp" />
+                    <Button
+                        android:id="@+id/vprof_editor_version_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/global_select" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/textView7"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/default_control"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/vprof_editor_ctrl_spinner"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_redshift_hero"
+                        android:gravity="center_vertical"
+                        android:hint="@string/use_global_default"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="#FFFFF5F7"
+                        android:textSize="13sp" />
+                    <Button
+                        android:id="@+id/vprof_editor_ctrl_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/global_select" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/vprof_editor_beginPathView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Папка игры"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:id="@+id/vprof_editor_path"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_redshift_hero"
+                        android:ellipsize="end"
+                        android:gravity="center_vertical"
+                        android:hint=".minecraft"
+                        android:maxLines="2"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="#FFFFF5F7"
+                        android:textSize="12sp" />
+                    <Button
+                        android:id="@+id/vprof_editor_path_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/global_select" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="СРЕДА ЗАПУСКА"
+                android:textColor="#FFFF637C"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.14" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="9dp"
+                android:background="@drawable/bg_redshift_surface"
+                android:orientation="vertical"
+                android:padding="13dp">
+
+                <TextView
+                    android:id="@+id/textView2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pedit_java_runtime"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+                <Spinner
+                    android:id="@+id/vprof_editor_spinner_runtime"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_redshift_hero"
+                    android:paddingHorizontal="10dp" />
+
+                <TextView
+                    android:id="@+id/textView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/pedit_renderer"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+                <Spinner
+                    android:id="@+id/vprof_editor_profile_renderer"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_redshift_hero"
+                    android:paddingHorizontal="10dp" />
+
+                <TextView
+                    android:id="@+id/textView6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/pvc_jvmArgs"
+                    android:textColor="#FFFF9BAA"
+                    android:textSize="11sp" />
+                <EditText
+                    android:id="@+id/vprof_editor_jre_args"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_redshift_hero"
+                    android:hint="@string/use_global_default"
+                    android:inputType="text"
+                    android:minHeight="48dp"
+                    android:padding="12dp"
+                    android:textColor="#FFFFF5F7"
+                    android:textColorHint="#FF76656D"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/vprof_editor_shortcut_button"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_redshift_action"
+                android:text="@string/create_shortcut"
+                android:textAllCaps="false"
+                android:textColor="#FFFF9BAA" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="18dp"
+        android:paddingVertical="10dp">
+        <com.kdt.mcgui.MineButton
+            android:id="@+id/vprof_editor_save_button"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_redshift_play"
+            android:text="@string/global_save"
+            android:textColor="#FFFFFFFF" />
+        <com.kdt.mcgui.MineButton
+            android:id="@+id/vprof_editor_delete_button"
+            android:layout_width="0dp"
+            android:layout_height="54dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_redshift_action"
+            android:text="@string/global_delete"
+            android:textColor="#FFFF9BAA" />
+    </LinearLayout>
+</LinearLayout>
+"""
+(RES / "layout/fragment_profile_editor.xml").write_text(profile_editor, encoding="utf-8")
+print("REDSHIFT profile editor rebuilt as grouped Instance Workshop.")
