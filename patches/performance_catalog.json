@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "engine": "REDSHIFT Performance Engine",
+  "description": "Candidate optimization projects. Exact game version, loader, dependencies and conflicts must be resolved from Modrinth before download.",
+  "profiles": {
+    "lite": {
+      "label": "Lite",
+      "priority": [
+        "fps",
+        "memory",
+        "startup"
+      ],
+      "renderDistance": 6,
+      "simulationDistance": 4,
+      "particles": "minimal"
+    },
+    "balanced": {
+      "label": "Balanced",
+      "priority": [
+        "fps",
+        "memory",
+        "visuals"
+      ],
+      "renderDistance": 10,
+      "simulationDistance": 6,
+      "particles": "decreased"
+    },
+    "quality": {
+      "label": "Quality",
+      "priority": [
+        "stability",
+        "visuals"
+      ],
+      "renderDistance": 12,
+      "simulationDistance": 8,
+      "particles": "all"
+    }
+  },
+  "projects": [
+    {
+      "id": "sodium",
+      "loaders": [
+        "fabric",
+        "quilt"
+      ],
+      "role": "renderer",
+      "conflicts": [
+        "optifine",
+        "canvas"
+      ],
+      "required": true
+    },
+    {
+      "id": "lithium",
+      "loaders": [
+        "fabric",
+        "quilt"
+      ],
+      "role": "game_logic",
+      "conflicts": [],
+      "required": true
+    },
+    {
+      "id": "ferrite-core",
+      "loaders": [
+        "fabric",
+        "forge",
+        "neoforge",
+        "quilt"
+      ],
+      "role": "memory",
+      "conflicts": [],
+      "required": true
+    },
+    {
+      "id": "immediatelyfast",
+      "loaders": [
+        "fabric",
+        "forge",
+        "neoforge",
+        "quilt"
+      ],
+      "role": "rendering",
+      "conflicts": [],
+      "required": false
+    },
+    {
+      "id": "entityculling",
+      "loaders": [
+        "fabric",
+        "forge",
+        "neoforge",
+        "quilt"
+      ],
+      "role": "rendering",
+      "conflicts": [],
+      "required": false
+    },
+    {
+      "id": "dynamic-fps",
+      "loaders": [
+        "fabric",
+        "forge",
+        "neoforge",
+        "quilt"
+      ],
+      "role": "background",
+      "conflicts": [],
+      "required": false
+    },
+    {
+      "id": "modernfix",
+      "loaders": [
+        "fabric",
+        "forge",
+        "neoforge"
+      ],
+      "role": "memory_startup",
+      "conflicts": [
+        "canary"
+      ],
+      "required": false
+    },
+    {
+      "id": "memoryleakfix",
+      "loaders": [
+        "fabric",
+        "forge"
+      ],
+      "role": "memory",
+      "conflicts": [],
+      "required": false
+    },
+    {
+      "id": "badoptimizations",
+      "loaders": [
+        "fabric",
+        "forge",
+        "neoforge",
+        "quilt"
+      ],
+      "role": "misc",
+      "conflicts": [],
+      "required": false
+    },
+    {
+      "id": "embeddium",
+      "loaders": [
+        "forge",
+        "neoforge"
+      ],
+      "role": "renderer",
+      "conflicts": [
+        "optifine",
+        "rubidium"
+      ],
+      "required": true
+    },
+    {
+      "id": "canary",
+      "loaders": [
+        "forge"
+      ],
+      "role": "game_logic",
+      "conflicts": [
+        "modernfix"
+      ],
+      "required": false
+    }
+  ],
+  "rules": [
+    "Never infer support for a Minecraft version from support for another version.",
+    "Query the Modrinth versions endpoint with the exact Minecraft version and selected loader before installation.",
+    "Prefer stable releases; exclude beta and alpha unless explicitly enabled.",
+    "Resolve required dependencies recursively and detect conflicts before download.",
+    "Never install mutually conflicting renderer projects.",
+    "Do not change the user's selected renderer automatically.",
+    "Keep each profile's mods directory isolated and never overwrite user-managed mods.",
+    "Create a manifest and backup before changing an existing profile.",
+    "Verify downloaded file hashes when provided by the source API.",
+    "Skip unsupported projects and explain why."
+  ]
+}
