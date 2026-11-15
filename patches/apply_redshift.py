@@ -1549,6 +1549,7 @@ public final class RedshiftPerformanceEngine {
                 install(context, profileId, which);
             })
             .setNeutralButton("Резервные копии", (dialog, which) -> showBackups(context, profileId))
+            .setPositiveButton("Мои моды", (dialog, which) -> showModManager(context, profileId))
             .setNegativeButton("Отмена", null)
             .show();
     }
@@ -1600,6 +1601,52 @@ public final class RedshiftPerformanceEngine {
             Toast.makeText(context, "Восстановлено модов: " + restored + ". Конфликтующие файлы пропущены.", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             Toast.makeText(context, "Не удалось восстановить: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    private static void showModManager(Context context, String profileId) {
+        try {
+            LauncherProfiles.load();
+            MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(profileId);
+            if (profile == null) throw new IOException("Профиль не найден");
+            File modsDir = new File(Tools.getGameDirPath(profile), "mods");
+            File[] jars = modsDir.listFiles((dir, name) -> name.toLowerCase(java.util.Locale.ROOT).endsWith(".jar"));
+            if (jars == null || jars.length == 0) {
+                Toast.makeText(context, "В этой сборке пока нет JAR-модов", Toast.LENGTH_LONG).show();
+                return;
+            }
+            java.util.Arrays.sort(jars, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
+            String[] labels = new String[jars.length];
+            for (int i = 0; i < jars.length; i++) labels[i] = jars[i].getName();
+            new AlertDialog.Builder(context)
+                .setTitle("Моды сборки • " + jars.length)
+                .setItems(labels, (dialog, which) -> new AlertDialog.Builder(context)
+                    .setTitle("Удалить мод?")
+                    .setMessage(labels[which] + "\\n\\nПеред удалением файл будет сохранён в резервную копию REDSHIFT.")
+                    .setPositiveButton("Сохранить и удалить", (confirm, action) -> removeMod(context, profile, jars[which]))
+                    .setNegativeButton("Отмена", null)
+                    .show())
+                .setNegativeButton("Закрыть", null)
+                .show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Не удалось открыть список модов: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static void removeMod(Context context, MinecraftProfile profile, File modFile) {
+        try {
+            if (!modFile.isFile() || !modFile.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".jar")) {
+                throw new IOException("Файл мода больше не существует");
+            }
+            File backupRoot = new File(new File(Tools.getGameDirPath(profile), ".redshift-backups"),
+                "manual-" + System.currentTimeMillis());
+            File savedMod = new File(new File(backupRoot, "mods"), modFile.getName());
+            copyFile(modFile, savedMod);
+            if (!modFile.delete()) throw new IOException("Резервная копия создана, но удалить исходный файл не удалось");
+            Toast.makeText(context, "Мод удалён. Копия сохранена: " + savedMod.getName(), Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Ошибка удаления мода: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
