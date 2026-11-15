@@ -1,0 +1,78 @@
+name: REDSHIFT Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/android.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: redshift-android-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout REDSHIFT configuration
+        uses: actions/checkout@v4
+
+      - name: Checkout Android launcher base
+        uses: actions/checkout@v4
+        with:
+          repository: BoreKKst/minelauncher
+          ref: main
+          path: upstream
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Brand app as REDSHIFT
+        working-directory: upstream
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("app_pojavlauncher/build.gradle")
+          if not p.exists():
+              raise SystemExit("Expected app_pojavlauncher/build.gradle was not found in upstream.")
+          s = p.read_text(encoding="utf-8")
+          s = s.replace('"XDAetherium (Debug)"', '"REDSHIFT (Debug)"')
+          s = s.replace('"XDAetherium"', '"REDSHIFT"')
+          s = s.replace('"minelauncher (Debug)"', '"REDSHIFT (Debug)"')
+          s = s.replace('"minelauncher"', '"REDSHIFT"')
+          p.write_text(s, encoding="utf-8")
+          PY
+          find app_pojavlauncher/src/main/res -type f \( -name '*.xml' -o -name '*.json' \) -print0 | xargs -0 sed -i 's/XDAetherium/REDSHIFT/g; s/minelauncher/REDSHIFT/g' || true
+
+      - name: Build APK
+        working-directory: upstream
+        env:
+          JAVA_OPTS: "-Xmx5g -XX:MaxMetaspaceSize=1g"
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app_pojavlauncher:assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: redshift-debug-apk
+          path: upstream/app_pojavlauncher/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
