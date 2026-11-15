@@ -104,6 +104,10 @@ jobs:
           PY
           printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
 
+      - name: Apply REDSHIFT launcher assets and UI
+        working-directory: upstream
+        run: python3 ../patches/apply_redshift.py
+
       - name: Build APK
         working-directory: upstream
         env:
