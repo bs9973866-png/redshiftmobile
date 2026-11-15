@@ -222,6 +222,10 @@ if land_layout.exists():
             </LinearLayout>
             """
         land_xml = land_xml[:first_button] + hero_land + land_xml[first_button:]
+        land_xml = land_xml.replace('app:layout_constraintTop_toTopOf="parent"/>',
+                                    'app:layout_constraintTop_toBottomOf="@id/redshift_hero"/>', 1)
+        land_xml = land_xml.replace('app:layout_constraintTop_toTopOf="parent" />',
+                                    'app:layout_constraintTop_toBottomOf="@id/redshift_hero" />', 1)
         land_layout.write_text(land_xml, encoding="utf-8")
 
 
