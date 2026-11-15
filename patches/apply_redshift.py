@@ -1503,3 +1503,181 @@ if catalog_source.exists():
     )
 else:
     raise FileNotFoundError("REDSHIFT performance catalog is missing")
+
+
+# === REDSHIFT Performance Engine: real Modrinth resolution + profile-scoped install ===
+engine_java = r"""package net.kdt.pojavlaunch.performance;
+
+import android.content.Context;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+
+import net.kdt.pojavlaunch.Tools;
+import net.kdt.pojavlaunch.modloaders.modpacks.api.ModDependencyResolver;
+import net.kdt.pojavlaunch.modloaders.modpacks.api.ResolveResult;
+import net.kdt.pojavlaunch.modloaders.modpacks.api.SingleModInstaller;
+import net.kdt.pojavlaunch.modloaders.modpacks.models.ModItem;
+import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
+import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public final class RedshiftPerformanceEngine {
+    private RedshiftPerformanceEngine() {}
+
+    public static void show(Context context, String profileId) {
+        String[] modes = {"Lite — максимум FPS", "Balanced — баланс", "Quality — больше визуальных улучшений"};
+        new AlertDialog.Builder(context)
+            .setTitle("REDSHIFT Performance Engine")
+            .setMessage("Подберём моды именно под выбранную версию Minecraft и загрузчик. Несовместимые проекты будут пропущены.")
+            .setSingleChoiceItems(modes, 1, (dialog, which) -> {
+                dialog.dismiss();
+                install(context, profileId, which);
+            })
+            .setNegativeButton("Отмена", null)
+            .show();
+    }
+
+    private static void install(Context context, String profileId, int mode) {
+        Toast.makeText(context, "Проверяем совместимость модов…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                LauncherProfiles.load();
+                MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(profileId);
+                if (profile == null) throw new Exception("Профиль Minecraft не найден");
+                String mcVersion = profile.lastVersionId;
+                String loader = profile.modLoader;
+                if (mcVersion == null || mcVersion.trim().isEmpty()) throw new Exception("Сначала выбери версию Minecraft");
+                if (loader == null || loader.trim().isEmpty()) loader = "fabric";
+                loader = loader.toLowerCase(java.util.Locale.ROOT);
+                if (!loader.equals("fabric") && !loader.equals("forge") &&
+                    !loader.equals("neoforge") && !loader.equals("quilt")) {
+                    throw new Exception("Для загрузчика " + loader + " пока нет набора автооптимизации");
+                }
+
+                List<String> projects = projectsFor(loader, mode);
+                ResolveResult combined = new ResolveResult();
+                Set<String> planned = new HashSet<>();
+                List<String> skipped = new ArrayList<>();
+                ModDependencyResolver resolver = new ModDependencyResolver();
+
+                for (String projectId : projects) {
+                    ResolveResult one = resolver.resolve(projectId, profile, mcVersion, loader);
+                    if (!one.success) {
+                        skipped.add(projectId);
+                        continue;
+                    }
+                    addUnique(combined.modsToInstall, one.modsToInstall, planned);
+                    addUnique(combined.dependenciesToInstall, one.dependenciesToInstall, planned);
+                }
+
+                if (combined.modsToInstall.isEmpty() && combined.dependenciesToInstall.isEmpty()) {
+                    throw new Exception("Не найдено совместимых оптимизационных модов для " + mcVersion + " / " + loader);
+                }
+
+                combined.success = true;
+                final int installCount = combined.modsToInstall.size() + combined.dependenciesToInstall.size();
+                final int skippedCount = skipped.size();
+                SingleModInstaller.installModWithDependencies(combined, profileId,
+                    () -> Tools.runOnUiThread(() -> Toast.makeText(context,
+                        "Готово: установлено " + installCount + " модов" +
+                        (skippedCount > 0 ? ", пропущено несовместимых: " + skippedCount : ""),
+                        Toast.LENGTH_LONG).show()),
+                    () -> Tools.runOnUiThread(() -> Toast.makeText(context,
+                        "Не удалось установить набор оптимизации", Toast.LENGTH_LONG).show())
+                );
+            } catch (Exception e) {
+                final String message = e.getMessage() == null ? "Неизвестная ошибка" : e.getMessage();
+                Tools.runOnUiThread(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+    private static List<String> projectsFor(String loader, int mode) {
+        List<String> ids = new ArrayList<>();
+        if (loader.equals("fabric") || loader.equals("quilt")) {
+            ids.add("sodium");
+            ids.add("lithium");
+            ids.add("ferrite-core");
+            ids.add("immediatelyfast");
+            ids.add("entityculling");
+            if (mode >= 1) ids.add("dynamic-fps");
+            if (mode >= 2) ids.add("badoptimizations");
+        } else {
+            ids.add("embeddium");
+            ids.add("ferrite-core");
+            ids.add("immediatelyfast");
+            ids.add("entityculling");
+            ids.add("modernfix");
+            if (mode >= 1) ids.add("memoryleakfix");
+            if (mode >= 2) ids.add("badoptimizations");
+        }
+        return ids;
+    }
+
+    private static void addUnique(List<ModItem> target, List<ModItem> incoming, Set<String> planned) {
+        for (ModItem mod : incoming) {
+            String key = mod.projectId == null ? mod.id : mod.projectId;
+            if (key != null && planned.add(key)) target.add(mod);
+        }
+    }
+}
+"""
+perf_dir = ROOT / "java/net/kdt/pojavlaunch/performance"
+perf_dir.mkdir(parents=True, exist_ok=True)
+(perf_dir / "RedshiftPerformanceEngine.java").write_text(engine_java, encoding="utf-8")
+
+# Add a genuine dashboard action and connect it to the selected instance.
+portrait_path = RES / "layout/fragment_launcher.xml"
+portrait_xml = portrait_path.read_text(encoding="utf-8")
+if 'performance_engine_button' not in portrait_xml:
+    tile = """<com.kdt.mcgui.LauncherMenuButton
+                    android:id="@+id/performance_engine_button"
+                    style="@style/LauncherMenuButton.Universal"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_redshift_action"
+                    android:drawableStart="@drawable/ic_redshift_mark"
+                    android:drawableTint="#FFFF7185"
+                    android:gravity="center_vertical"
+                    android:paddingStart="14dp"
+                    android:text="PERFORMANCE ENGINE  •  Автооптимизация"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="13sp" />"""
+    anchor = '<com.kdt.mcgui.LauncherMenuButton\n                    android:id="@+id/open_files_button"'
+    if anchor in portrait_xml:
+        # place the engine card immediately before the open-folder action
+        portrait_xml = portrait_xml.replace(anchor, tile + "\n\n                " + anchor, 1)
+    else:
+        raise RuntimeError("Could not locate REDSHIFT dashboard action section")
+    portrait_path.write_text(portrait_xml, encoding="utf-8")
+
+main_menu = ROOT / "java/net/kdt/pojavlaunch/fragments/MainMenuFragment.java"
+main_source = main_menu.read_text(encoding="utf-8")
+if "RedshiftPerformanceEngine.show" not in main_source:
+    marker = "        mOpenDirectoryButton.setOnClickListener((v)-> openPath(v.getContext(), getCurrentProfileDirectory(), false));"
+    handler = marker + """
+
+        View performanceButton = view.findViewById(R.id.performance_engine_button);
+        if (performanceButton != null) {
+            performanceButton.setOnClickListener(v -> {
+                String selectedProfile = LauncherPreferences.DEFAULT_PREF.getString(
+                    LauncherPreferences.PREF_KEY_CURRENT_PROFILE, null);
+                if (!Tools.isValidString(selectedProfile)) {
+                    Toast.makeText(requireContext(), "Сначала выбери профиль Minecraft", Toast.LENGTH_LONG).show();
+                } else {
+                    net.kdt.pojavlaunch.performance.RedshiftPerformanceEngine.show(requireContext(), selectedProfile);
+                }
+            });
+        }"""
+    if marker not in main_source:
+        raise RuntimeError("Could not attach Performance Engine click handler")
+    main_menu.write_text(main_source.replace(marker, handler, 1), encoding="utf-8")
+
+print("REDSHIFT Performance Engine wired to dashboard: exact-version Modrinth resolver and profile-specific installer.")
