@@ -929,3 +929,237 @@ activity_layout = r"""<?xml version="1.0" encoding="utf-8"?>
 (RES / "layout/activity_pojav_launcher.xml").write_text(activity_layout, encoding="utf-8")
 
 print("REDSHIFT 2.0 dashboard hierarchy replaced: new account header, launch control panel, action grid and landscape split layout.")
+
+
+# === REDSHIFT identity flows: account provider and mod-loader selection ===
+# Preserve all IDs so upstream fragment click handlers continue to own navigation.
+
+auth_selector = r"""<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="22dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="28dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="REDSHIFT IDENTITY"
+            android:textColor="#FFFF637C"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.18" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="Выбери способ входа"
+            android:textColor="#FFFFF5F7"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:gravity="center"
+            android:text="Подключи аккаунт или продолжи без авторизации."
+            android:textColor="#FFB9AAB0"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:id="@+id/login_menu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@drawable/bg_redshift_hero"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/button_microsoft_authentication"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="18dp"
+                android:text="Microsoft Account"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="15sp" />
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/button_elyby_authentication"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="18dp"
+                android:text="@string/login_elyby_account"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="15sp" />
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/button_local_authentication"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="18dp"
+                android:text="Offline — никнейм"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:gravity="center"
+            android:text="REDSHIFT • ACCOUNT CENTER"
+            android:textColor="#FF76656D"
+            android:textSize="9sp"
+            android:letterSpacing="0.14" />
+    </LinearLayout>
+</ScrollView>
+"""
+
+modloader_selector = r"""<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:fillViewport="true"
+    android:overScrollMode="never">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="24dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="INSTANCE BUILDER"
+            android:textColor="#FFFF637C"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.16" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Выбери загрузчик"
+            android:textColor="#FFFFF5F7"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:text="Загрузчик определяет совместимость модов и сборки."
+            android:textColor="#FFB9AAB0"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:background="@drawable/bg_redshift_hero"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/btn_loader_fabric"
+                android:layout_width="match_parent"
+                android:layout_height="62dp"
+                android:layout_marginBottom="9dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="FABRIC  •  Лёгкий и быстрый"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="14sp" />
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/btn_loader_forge"
+                android:layout_width="match_parent"
+                android:layout_height="62dp"
+                android:layout_marginBottom="9dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="FORGE  •  Большая библиотека модов"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="14sp" />
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/btn_loader_neoforge"
+                android:layout_width="match_parent"
+                android:layout_height="62dp"
+                android:layout_marginBottom="9dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="NEOFORGE  •  Современные сборки"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="14sp" />
+
+            <com.kdt.mcgui.MineButton
+                android:id="@+id/btn_loader_quilt"
+                android:layout_width="match_parent"
+                android:layout_height="62dp"
+                android:background="@drawable/bg_redshift_action"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="QUILT  •  Альтернатива Fabric"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <com.kdt.mcgui.MineButton
+            android:id="@+id/btn_loader_back"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_redshift_surface"
+            android:text="@string/modloader_select_back"
+            android:textAllCaps="false"
+            android:textColor="#FFFF9BAA"
+            android:textSize="13sp" />
+    </LinearLayout>
+</ScrollView>
+"""
+
+(RES / "layout/fragment_select_auth_method.xml").write_text(auth_selector, encoding="utf-8")
+(RES / "layout/fragment_modloader_select.xml").write_text(modloader_selector, encoding="utf-8")
+
+print("REDSHIFT identity and mod-loader selection screens redesigned with preserved upstream action IDs.")
