@@ -1,0 +1,153 @@
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+ROOT = Path("app_pojavlauncher/src/main")
+RES = ROOT / "res"
+
+def replace_text(path, replacements):
+    text = path.read_text(encoding="utf-8")
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    path.write_text(text, encoding="utf-8")
+
+# Keep the existing authentication, Java runtime, profile, loader and mod APIs.
+# This patch changes presentation and localization without replacing their logic.
+replace_text(RES / "values/strings.xml", {
+    '<string name="app_name" translatable="false">minelauncher</string>':
+        '<string name="app_name" translatable="false">REDSHIFT</string>',
+    'minelauncher has unexpectedly crashed': 'REDSHIFT has unexpectedly crashed',
+})
+
+replace_text(RES / "values/colors.xml", {
+    "#181818": "#10090D",
+    "#464646": "#39202A",
+    "#242424": "#1B0D14",
+    "#232323": "#170B11",
+    "#9649b8": "#FF334F",
+    "#4CC4C4C4": "#66FF334F",
+})
+
+styles = RES / "values/styles.xml"
+replace_text(styles, {
+    '<item name="android:windowContentOverlay">@null</item>':
+        '<item name="android:windowContentOverlay">@null</item>\n'
+        '        <item name="android:windowLightStatusBar">false</item>',
+})
+
+# REDSHIFT brand mark: vector asset, scales cleanly on every Android density.
+(RES / "drawable/ic_redshift_mark.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp" android:height="64dp" android:viewportWidth="64" android:viewportHeight="64">
+    <path android:fillColor="#FF334F" android:pathData="M32,2 C15.4,2 2,15.4 2,32 C2,48.6 15.4,62 32,62 C48.6,62 62,48.6 62,32 C62,15.4 48.6,2 32,2 Z"/>
+    <path android:fillColor="#16090E" android:pathData="M18,14 L43,14 C51,14 55,18 55,25 C55,31 52,35 46,37 L55,50 L42,50 L33,37 L29,37 L29,50 L18,50 Z M29,24 L29,29 L42,29 C44,29 45,28 45,26.5 C45,25 44,24 42,24 Z"/>
+</vector>
+""", encoding="utf-8")
+
+(RES / "drawable/bg_redshift_hero.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="18dp"/>
+    <gradient android:angle="0" android:startColor="#281018" android:centerColor="#1B0D14" android:endColor="#130A12"/>
+    <stroke android:width="1dp" android:color="#66FF334F"/>
+</shape>
+""", encoding="utf-8")
+
+# A compact branded dashboard header, inserted without changing existing controls.
+layout = RES / "layout/fragment_launcher.xml"
+xml = layout.read_text(encoding="utf-8")
+anchor = '<com.kdt.mcgui.LauncherMenuButton\n\t\t\t\tandroid:id="@+id/custom_control_button"'
+if anchor in xml and 'redshift_hero' not in xml:
+    hero = """<LinearLayout
+                android:id="@+id/redshift_hero"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/bg_redshift_hero"
+                android:gravity="center_vertical"
+                android:minHeight="104dp"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                app:layout_constraintTop_toTopOf="parent">
+                <ImageView
+                    android:layout_width="54dp"
+                    android:layout_height="54dp"
+                    android:contentDescription="REDSHIFT"
+                    android:src="@drawable/ic_redshift_mark" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="REDSHIFT"
+                        android:textColor="#FFFFF5F7"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.08" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="MINECRAFT JAVA EDITION"
+                        android:textColor="#FFFF7185"
+                        android:textSize="10sp"
+                        android:letterSpacing="0.12" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="Твой мир. Твои правила."
+                        android:textColor="#FFBDAAB0"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+            """
+    xml = xml.replace(anchor, hero + anchor)
+    xml = xml.replace('app:layout_constraintTop_toTopOf="parent" />',
+                      'app:layout_constraintTop_toBottomOf="@id/redshift_hero" />', 1)
+    layout.write_text(xml, encoding="utf-8")
+
+# Russian labels for the primary launcher and authentication surfaces.
+ru = RES / "values-ru"
+ru.mkdir(parents=True, exist_ok=True)
+(ru / "strings.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">REDSHIFT</string>
+    <string name="app_short_name">REDSHIFT</string>
+    <string name="main_play">ИГРАТЬ</string>
+    <string name="mcl_option_customcontrol">Управление</string>
+    <string name="main_install_jar_file">Установить JAR-файл</string>
+    <string name="main_share_logs">Поделиться логами</string>
+    <string name="mcl_button_open_directory">Открыть папку игры</string>
+    <string name="login_elyby_account">Аккаунт Ely.by</string>
+    <string name="login_elyby_username_hint">Логин или почта Ely.by</string>
+    <string name="login_elyby_password_hint">Пароль</string>
+    <string name="login_elyby_totp_hint">Код 2FA (необязательно)</string>
+    <string name="login_elyby_register">Создать аккаунт Ely.by</string>
+    <string name="login_microsoft">Войти через Microsoft</string>
+    <string name="login_online_login_label">Войти</string>
+    <string name="login_online_username_hint">Имя пользователя</string>
+    <string name="global_save">Сохранить</string>
+    <string name="global_cancel">Отмена</string>
+    <string name="global_retry">Повторить</string>
+    <string name="global_error">Ошибка</string>
+    <string name="mcl_setting_title_javaargs">Аргументы JVM</string>
+    <string name="mcl_setting_title_resolution_scaler">Масштаб разрешения</string>
+    <string name="mcl_setting_title_renderer_settings">Настройки рендерера</string>
+    <string name="mcl_setting_category_renderer">Рендерер</string>
+    <string name="mcl_setting_renderer_gles2_4">GL4ES — быстрый режим</string>
+    <string name="mcl_setting_renderer_vulkan_zink">Zink (Vulkan)</string>
+    <string name="mcl_setting_renderer_mobileglues">MobileGlues (OpenGL ES)</string>
+    <string name="mcl_setting_veroption_release">Релизы</string>
+    <string name="mcl_setting_veroption_snapshot">Снапшоты</string>
+    <string name="mcl_setting_veroption_oldalpha">Старые Alpha</string>
+    <string name="mcl_setting_veroption_oldbeta">Старые Beta</string>
+</resources>
+""", encoding="utf-8")
+
+print("REDSHIFT visual assets and Russian launcher labels applied.")
