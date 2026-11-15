@@ -1921,6 +1921,39 @@ public final class RedshiftPerformanceEngine {
     }
 }
 """
+
+# Dedicated REDSHIFT instance hub for the currently selected profile.
+engine_java = engine_java.replace(
+    "    private static void showGraphicsEditor(Context context, String profileId) {",
+    """    public static void showInstanceHub(Context context, String profileId) {
+        try {
+            LauncherProfiles.load();
+            MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(profileId);
+            if (profile == null) throw new IOException("Профиль не найден");
+            File gameDir = Tools.getGameDirPath(profile);
+            String version = profile.lastVersionId == null ? "Не выбрана" : profile.lastVersionId;
+            String loader = profile.modLoader == null ? "Vanilla" : profile.modLoader;
+            String details = "ВЕРСИЯ  " + version + "\\nЗАГРУЗЧИК  " + loader +
+                "\\n\\nПАПКА ПРОФИЛЯ\\n" + gameDir.getAbsolutePath() +
+                "\\n\\nВсе действия применяются только к этому профилю.";
+            String[] actions = {"Мои моды", "Настройки графики", "Резервные копии",
+                "Автооптимизация Lite", "Автооптимизация Balanced", "Автооптимизация Quality"};
+            new AlertDialog.Builder(context).setTitle("REDSHIFT • Управление профилем")
+                .setMessage(details)
+                .setItems(actions, (dialog, which) -> {
+                    if (which == 0) showModManager(context, profileId);
+                    else if (which == 1) showGraphicsEditor(context, profileId);
+                    else if (which == 2) showBackups(context, profileId);
+                    else install(context, profileId, which - 3);
+                }).setNegativeButton("Закрыть", null).show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Не удалось открыть профиль: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static void showGraphicsEditor(Context context, String profileId) {"""
+);
+
 perf_dir = ROOT / "java/net/kdt/pojavlaunch/performance"
 perf_dir.mkdir(parents=True, exist_ok=True)
 (perf_dir / "RedshiftPerformanceEngine.java").write_text(engine_java, encoding="utf-8")
@@ -1928,6 +1961,31 @@ perf_dir.mkdir(parents=True, exist_ok=True)
 # Add a genuine dashboard action and connect it to the selected instance.
 portrait_path = RES / "layout/fragment_launcher.xml"
 portrait_xml = portrait_path.read_text(encoding="utf-8")
+
+# Add a dedicated instance-management entry to the dashboard.
+if 'instance_hub_button' not in portrait_xml:
+    hub_tile = """<com.kdt.mcgui.LauncherMenuButton
+                    android:id="@+id/instance_hub_button"
+                    style="@style/LauncherMenuButton.Universal"
+                    android:layout_width="match_parent"
+                    android:layout_height="58dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_redshift_action"
+                    android:drawableStart="@drawable/ic_redshift_mark"
+                    android:drawableTint="#FFFF7185"
+                    android:gravity="center_vertical"
+                    android:paddingStart="14dp"
+                    android:text="МОЙ ПРОФИЛЬ  •  Управление сборкой"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="13sp" />"""
+    performance_anchor = '<com.kdt.mcgui.LauncherMenuButton\n                    android:id="@+id/performance_engine_button"'
+    if performance_anchor in portrait_xml:
+        portrait_xml = portrait_xml.replace(performance_anchor, hub_tile + "\n\n                " + performance_anchor, 1)
+        portrait_path.write_text(portrait_xml, encoding="utf-8")
+    else:
+        raise RuntimeError("Could not locate Performance Engine tile")
+
 if 'performance_engine_button' not in portrait_xml:
     tile = """<com.kdt.mcgui.LauncherMenuButton
                     android:id="@+id/performance_engine_button"
@@ -1967,6 +2025,21 @@ if "RedshiftPerformanceEngine.show" not in main_source:
                     Toast.makeText(requireContext(), "Сначала выбери профиль Minecraft", Toast.LENGTH_LONG).show();
                 } else {
                     net.kdt.pojavlaunch.performance.RedshiftPerformanceEngine.show(requireContext(), selectedProfile);
+                }
+            });
+        }
+
+        View instanceHubButton = view.findViewById(R.id.instance_hub_button);
+        if (instanceHubButton != null) {
+            instanceHubButton.setOnClickListener(v -> {
+                String selectedProfile = LauncherPreferences.DEFAULT_PREF.getString(
+                    LauncherPreferences.PREF_KEY_CURRENT_PROFILE, null);
+                if (!Tools.isValidString(selectedProfile)) {
+                    Toast.makeText(requireContext(), "Сначала выбери профиль Minecraft", Toast.LENGTH_LONG).show();
+                } else {
+                    net.kdt.pojavlaunch.performance.RedshiftPerformanceEngine.showInstanceHub(requireContext(), selectedProfile);
+                }
+            });
                 }
             });
         }"""
