@@ -150,4 +150,79 @@ ru.mkdir(parents=True, exist_ok=True)
 </resources>
 """, encoding="utf-8")
 
-print("REDSHIFT visual assets and Russian launcher labels applied.")
+
+# Adaptive launcher icon for Android 8+ (the manifest already references these names).
+adaptive = RES / "mipmap-anydpi-v26"
+adaptive.mkdir(parents=True, exist_ok=True)
+foreground = RES / "drawable/ic_redshift_launcher_foreground.xml"
+foreground.write_text("""<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FF334F"
+        android:pathData="M54,8 C28.6,8 8,28.6 8,54 C8,79.4 28.6,100 54,100 C79.4,100 100,79.4 100,54 C100,28.6 79.4,8 54,8 Z"/>
+    <path android:fillColor="#16090E"
+        android:pathData="M31,30 L67,30 C78,30 84,36 84,47 C84,55 80,61 71,64 L85,82 L67,82 L54,65 L48,65 L48,82 L31,82 Z M48,44 L48,52 L66,52 C69,52 71,51 71,48 C71,45 69,44 66,44 Z"/>
+</vector>
+""", encoding="utf-8")
+icon_xml = """<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/redshift_icon_background"/>
+    <foreground android:drawable="@drawable/ic_redshift_launcher_foreground"/>
+</adaptive-icon>
+"""
+(adaptive / "ic_launcher.xml").write_text(icon_xml, encoding="utf-8")
+(adaptive / "ic_launcher_round.xml").write_text(icon_xml, encoding="utf-8")
+(RES / "values/redshift_icon.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<resources><color name="redshift_icon_background">#10090D</color></resources>
+""", encoding="utf-8")
+
+# Apply the same compact brand header to the landscape launcher layout.
+land_layout = RES / "layout-land/fragment_launcher.xml"
+if land_layout.exists():
+    land_xml = land_layout.read_text(encoding="utf-8")
+    land_anchor = '<com.kdt.mcgui.LauncherMenuButton'
+    if 'redshift_hero' not in land_xml and land_anchor in land_xml:
+        first_button = land_xml.find(land_anchor)
+        # Keep the banner inside the existing scroll content, before its first menu item.
+        hero_land = """<LinearLayout
+                android:id="@+id/redshift_hero"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="@drawable/bg_redshift_hero"
+                android:gravity="center_vertical"
+                android:minHeight="78dp"
+                android:orientation="horizontal"
+                android:padding="12dp">
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:contentDescription="REDSHIFT"
+                    android:src="@drawable/ic_redshift_mark" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="REDSHIFT"
+                        android:textColor="#FFFFF5F7"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="MINECRAFT JAVA EDITION"
+                        android:textColor="#FFFF7185"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </LinearLayout>
+            """
+        land_xml = land_xml[:first_button] + hero_land + land_xml[first_button:]
+        land_layout.write_text(land_xml, encoding="utf-8")
+
+
+print("REDSHIFT visual assets, adaptive icon, landscape header and Russian labels applied.")
