@@ -1618,7 +1618,7 @@ public final class RedshiftPerformanceEngine {
                         current.put("particles", String.valueOf(p));
                         StringBuilder output = new StringBuilder();
                         for (Map.Entry<String, String> entry : current.entrySet()) {
-                            output.append(entry.getKey()).append(':').append(entry.getValue()).append('\\n');
+                            output.append(entry.getKey()).append(':').append(entry.getValue()).append('\n');
                         }
                         try (FileOutputStream stream = new FileOutputStream(options)) {
                             stream.write(output.toString().getBytes(StandardCharsets.UTF_8));
