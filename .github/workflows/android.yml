@@ -37,27 +37,72 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # GitHub-hosted Ubuntu images already contain Android command-line tools.
+      # Install only the SDK components required by this upstream project.
+      - name: Install Android SDK components
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort | tail -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "Android sdkmanager was not found under $SDK_ROOT"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;27.3.13750724"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
 
-      - name: Brand app as REDSHIFT
+      - name: Apply REDSHIFT branding
         working-directory: upstream
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p = Path("app_pojavlauncher/build.gradle")
-          if not p.exists():
-              raise SystemExit("Expected app_pojavlauncher/build.gradle was not found in upstream.")
-          s = p.read_text(encoding="utf-8")
-          s = s.replace('"XDAetherium (Debug)"', '"REDSHIFT (Debug)"')
-          s = s.replace('"XDAetherium"', '"REDSHIFT"')
-          s = s.replace('"minelauncher (Debug)"', '"REDSHIFT (Debug)"')
-          s = s.replace('"minelauncher"', '"REDSHIFT"')
-          p.write_text(s, encoding="utf-8")
+
+          gradle = Path("app_pojavlauncher/build.gradle")
+          source = gradle.read_text(encoding="utf-8")
+          source = source.replace('"XDAetherium (Debug)"', '"REDSHIFT (Debug)"')
+          source = source.replace('"XDAetherium"', '"REDSHIFT"')
+          source = source.replace('"minelauncher (Debug)"', '"REDSHIFT (Debug)"')
+          source = source.replace('"minelauncher"', '"REDSHIFT"')
+          gradle.write_text(source, encoding="utf-8")
+
+          strings = Path("app_pojavlauncher/src/main/res/values/strings.xml")
+          source = strings.read_text(encoding="utf-8")
+          source = source.replace('<string name="app_name" translatable="false">minelauncher</string>',
+                                  '<string name="app_name" translatable="false">REDSHIFT</string>')
+          source = source.replace('minelauncher has unexpectedly crashed',
+                                  'REDSHIFT has unexpectedly crashed')
+          strings.write_text(source, encoding="utf-8")
+
+          colors = Path("app_pojavlauncher/src/main/res/values/colors.xml")
+          source = colors.read_text(encoding="utf-8")
+          replacements = {
+              "#181818": "#10090D",
+              "#464646": "#39202A",
+              "#242424": "#1B0D14",
+              "#232323": "#170B11",
+              "#9649b8": "#FF334F",
+              "#4CC4C4C4": "#66FF334F",
+          }
+          for old, new in replacements.items():
+              source = source.replace(old, new)
+          colors.write_text(source, encoding="utf-8")
+
+          styles = Path("app_pojavlauncher/src/main/res/values/styles.xml")
+          source = styles.read_text(encoding="utf-8")
+          source = source.replace('<item name="android:windowContentOverlay">@null</item>',
+                                  '<item name="android:windowContentOverlay">@null</item>\n'
+                                  '        <item name="android:windowLightStatusBar">false</item>')
+          styles.write_text(source, encoding="utf-8")
           PY
-          find app_pojavlauncher/src/main/res -type f \( -name '*.xml' -o -name '*.json' \) -print0 | xargs -0 sed -i 's/XDAetherium/REDSHIFT/g; s/minelauncher/REDSHIFT/g' || true
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
 
       - name: Build APK
         working-directory: upstream
