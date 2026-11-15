@@ -320,4 +320,4 @@ a = a.replace('app:layout_constraintTop_toBottomOf="@+id/account_spinner" />',
               'app:layout_constraintTop_toBottomOf="@+id/account_spinner"\n        android:layout_marginTop="8dp" />')
 activity.write_text(a, encoding="utf-8")
 
-\nprint("REDSHIFT custom dashboard cards, account bar, adaptive icon and branding applied.")
+print("REDSHIFT custom dashboard cards, account bar, adaptive icon and branding applied.")
