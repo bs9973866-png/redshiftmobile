@@ -1489,3 +1489,17 @@ profile_editor = r"""<?xml version="1.0" encoding="utf-8"?>
 """
 (RES / "layout/fragment_profile_editor.xml").write_text(profile_editor, encoding="utf-8")
 print("REDSHIFT profile editor rebuilt as grouped Instance Workshop.")
+
+
+# Bundle the version-aware optimization catalog into the APK.
+# Runtime installation is implemented separately; this resource is the single
+# source of truth for project candidates, loader constraints and conflict rules.
+catalog_source = Path("../patches/performance_catalog.json")
+if catalog_source.exists():
+    raw_dir = RES / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    (raw_dir / "redshift_performance_catalog.json").write_text(
+        catalog_source.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+else:
+    raise FileNotFoundError("REDSHIFT performance catalog is missing")
