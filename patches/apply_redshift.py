@@ -1510,6 +1510,8 @@ engine_java = r"""package net.kdt.pojavlaunch.performance;
 
 import android.content.Context;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 
@@ -1548,10 +1550,89 @@ public final class RedshiftPerformanceEngine {
                 dialog.dismiss();
                 install(context, profileId, which);
             })
-            .setNeutralButton("Резервные копии", (dialog, which) -> showBackups(context, profileId))
+            .setNeutralButton("Настройки графики", (dialog, which) -> showGraphicsEditor(context, profileId))
             .setPositiveButton("Мои моды", (dialog, which) -> showModManager(context, profileId))
             .setNegativeButton("Отмена", null)
             .show();
+    }
+
+
+    private static void showGraphicsEditor(Context context, String profileId) {
+        try {
+            LauncherProfiles.load();
+            MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(profileId);
+            if (profile == null) throw new IOException("Профиль не найден");
+            File options = new File(Tools.getGameDirPath(profile), "options.txt");
+            Map<String, String> current = new LinkedHashMap<>();
+            if (options.isFile()) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(options))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        int colon = line.indexOf(':');
+                        if (colon > 0) current.put(line.substring(0, colon), line.substring(colon + 1));
+                    }
+                }
+            }
+            LinearLayout panel = new LinearLayout(context);
+            panel.setOrientation(LinearLayout.VERTICAL);
+            int pad = (int) (18 * context.getResources().getDisplayMetrics().density);
+            panel.setPadding(pad, pad, pad, 0);
+            EditText render = new EditText(context);
+            render.setSingleLine(true);
+            render.setInputType(2);
+            render.setHint("Дальность прорисовки (2–32)");
+            render.setText(current.getOrDefault("renderDistance", "8"));
+            panel.addView(render);
+            EditText simulation = new EditText(context);
+            simulation.setSingleLine(true);
+            simulation.setInputType(2);
+            simulation.setHint("Дальность симуляции (5–32)");
+            simulation.setText(current.getOrDefault("simulationDistance", "6"));
+            panel.addView(simulation);
+            EditText particles = new EditText(context);
+            particles.setSingleLine(true);
+            particles.setInputType(2);
+            particles.setHint("Частицы: 0 — минимум, 1 — снижено, 2 — все");
+            particles.setText(current.getOrDefault("particles", "1"));
+            panel.addView(particles);
+            new AlertDialog.Builder(context)
+                .setTitle("Графика Minecraft")
+                .setMessage("Настройки сохраняются в options.txt выбранного профиля. Перед изменением создаётся резервная копия.")
+                .setView(panel)
+                .setPositiveButton("Применить", (dialog, which) -> {
+                    try {
+                        int r = Integer.parseInt(render.getText().toString().trim());
+                        int sim = Integer.parseInt(simulation.getText().toString().trim());
+                        int p = Integer.parseInt(particles.getText().toString().trim());
+                        if (r < 2 || r > 32 || sim < 5 || sim > 32 || p < 0 || p > 2) {
+                            throw new IllegalArgumentException("Проверь диапазоны: прорисовка 2–32, симуляция 5–32, частицы 0–2");
+                        }
+                        File gameDir = Tools.getGameDirPath(profile);
+                        if (!gameDir.isDirectory() && !gameDir.mkdirs()) throw new IOException("Не удалось открыть папку игры");
+                        if (options.isFile()) {
+                            File backup = new File(new File(new File(gameDir, ".redshift-backups"), "graphics-" + System.currentTimeMillis()), "options.txt");
+                            copyFile(options, backup);
+                        }
+                        current.put("renderDistance", String.valueOf(r));
+                        current.put("simulationDistance", String.valueOf(sim));
+                        current.put("particles", String.valueOf(p));
+                        StringBuilder output = new StringBuilder();
+                        for (Map.Entry<String, String> entry : current.entrySet()) {
+                            output.append(entry.getKey()).append(':').append(entry.getValue()).append('\\n');
+                        }
+                        try (FileOutputStream stream = new FileOutputStream(options)) {
+                            stream.write(output.toString().getBytes(StandardCharsets.UTF_8));
+                        }
+                        Toast.makeText(context, "Настройки графики сохранены", Toast.LENGTH_LONG).show();
+                    } catch (Exception error) {
+                        Toast.makeText(context, "Не удалось применить: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Отмена", null)
+                .show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Ошибка редактора графики: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private static void showBackups(Context context, String profileId) {
