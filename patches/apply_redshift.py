@@ -1658,7 +1658,7 @@ public final class RedshiftPerformanceEngine {
         }
         StringBuilder output = new StringBuilder();
         for (Map.Entry<String, String> entry : values.entrySet()) {
-            output.append(entry.getKey()).append(':').append(entry.getValue()).append('\\n');
+            output.append(entry.getKey()).append(':').append(entry.getValue()).append('\n');
         }
         try (FileOutputStream stream = new FileOutputStream(options)) {
             stream.write(output.toString().getBytes(StandardCharsets.UTF_8));
@@ -1691,9 +1691,9 @@ public final class RedshiftPerformanceEngine {
         }
         File manifest = new File(backupDir, "REDSHIFT-backup.txt");
         try (FileOutputStream output = new FileOutputStream(manifest)) {
-            String data = "REDSHIFT Performance Engine backup\\nProfile: " + profileId +
-                "\\nMinecraft: " + mcVersion + "\\nLoader: " + loader +
-                "\\nMode: " + mode + "\\nCreated: " + new java.util.Date() +
+            String data = "REDSHIFT Performance Engine backup\nProfile: " + profileId +
+                "\nMinecraft: " + mcVersion + "\nLoader: " + loader +
+                "\nMode: " + mode + "\nCreated: " + new java.util.Date() +
                 "\\nRestore: copy files from mods/ back into the profile mods directory.";
             output.write(data.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
