@@ -1548,8 +1548,59 @@ public final class RedshiftPerformanceEngine {
                 dialog.dismiss();
                 install(context, profileId, which);
             })
+            .setNeutralButton("Резервные копии", (dialog, which) -> showBackups(context, profileId))
             .setNegativeButton("Отмена", null)
             .show();
+    }
+
+    private static void showBackups(Context context, String profileId) {
+        try {
+            LauncherProfiles.load();
+            MinecraftProfile profile = LauncherProfiles.mainProfileJson.profiles.get(profileId);
+            if (profile == null) throw new IOException("Профиль не найден");
+            File root = new File(Tools.getGameDirPath(profile), ".redshift-backups");
+            File[] backups = root.listFiles(File::isDirectory);
+            if (backups == null || backups.length == 0) {
+                Toast.makeText(context, "Резервных копий пока нет", Toast.LENGTH_LONG).show();
+                return;
+            }
+            java.util.Arrays.sort(backups, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+            String[] labels = new String[backups.length];
+            for (int i = 0; i < backups.length; i++) labels[i] = backups[i].getName();
+            new AlertDialog.Builder(context).setTitle("Резервные копии REDSHIFT")
+                .setItems(labels, (dialog, which) -> new AlertDialog.Builder(context)
+                    .setTitle("Восстановить " + labels[which] + "?")
+                    .setMessage("Существующие файлы модов не будут перезаписаны. Сохранённый options.txt будет восстановлен вместо текущего.")
+                    .setPositiveButton("Восстановить", (d, w) -> restoreBackup(context, profile, backups[which]))
+                    .setNegativeButton("Отмена", null).show())
+                .setNegativeButton("Закрыть", null).show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Ошибка списка копий: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private static void restoreBackup(Context context, MinecraftProfile profile, File backupDir) {
+        try {
+            File gameDir = Tools.getGameDirPath(profile);
+            File modsBackup = new File(backupDir, "mods");
+            File modsDir = new File(gameDir, "mods");
+            int restored = 0;
+            File[] jars = modsBackup.listFiles();
+            if (jars != null) {
+                if (!modsDir.exists() && !modsDir.mkdirs()) throw new IOException("Не удалось создать папку mods");
+                for (File jar : jars) {
+                    if (jar.isFile() && jar.getName().endsWith(".jar")) {
+                        File target = new File(modsDir, jar.getName());
+                        if (!target.exists()) { copyFile(jar, target); restored++; }
+                    }
+                }
+            }
+            File savedOptions = new File(backupDir, "options.txt");
+            if (savedOptions.isFile()) copyFile(savedOptions, new File(gameDir, "options.txt"));
+            Toast.makeText(context, "Восстановлено модов: " + restored + ". Конфликтующие файлы пропущены.", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Не удалось восстановить: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private static void install(Context context, String profileId, int mode) {
