@@ -321,3 +321,611 @@ a = a.replace('app:layout_constraintTop_toBottomOf="@+id/account_spinner" />',
 activity.write_text(a, encoding="utf-8")
 
 print("REDSHIFT custom dashboard cards, account bar, adaptive icon and branding applied.")
+
+
+# === REDSHIFT 2.0: rebuild the screen hierarchy, not just its colors ===
+# The original Pojav-style menu list is replaced by a launcher dashboard.
+# Keep the view IDs consumed by MainMenuFragment so existing actions still work.
+
+portrait_layout = r"""<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_menu_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingTop="18dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="REDSHIFT  /  GAME CENTER"
+                android:textColor="#FFFF637C"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.16" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Твой мир.\nТвой следующий шаг."
+                android:textColor="#FFFFF5F7"
+                android:textSize="30sp"
+                android:lineSpacingExtra="1dp"
+                android:fontFamily="sans"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Управляй сборками и запускай Minecraft в один тап."
+                android:textColor="#FFB9AAB0"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:background="@drawable/bg_redshift_hero"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="LAUNCH CONTROL"
+                        android:textColor="#FFFF7185"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.15" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_redshift_action"
+                        android:paddingStart="10dp"
+                        android:paddingTop="5dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="5dp"
+                        android:text="READY"
+                        android:textColor="#FFFFB8C2"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="ВЫБРАННАЯ СБОРКА"
+                    android:textColor="#FFB9AAB0"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <com.kdt.mcgui.mcVersionSpinner
+                        android:id="@+id/mc_version_spinner"
+                        android:layout_width="0dp"
+                        android:layout_height="54dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_redshift_surface"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="10dp"
+                        android:drawableEnd="@drawable/spinner_arrow"
+                        app:drawableEndPadding="6dp"
+                        app:drawableEndSize="16dp"
+                        app:drawableStartIntegerScaling="true"
+                        app:drawableStartSize="34dp" />
+
+                    <ImageButton
+                        android:id="@+id/edit_profile_button"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_redshift_action"
+                        android:contentDescription="Настроить сборку"
+                        android:padding="14dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_edit_profile"
+                        android:tint="#FFFF7185" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Версия, профиль и параметры запуска — здесь."
+                    android:textColor="#FFB9AAB0"
+                    android:textSize="11sp" />
+
+                <com.kdt.mcgui.MineButton
+                    android:id="@+id/play_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:layout_marginTop="18dp"
+                    android:background="@drawable/bg_redshift_play"
+                    android:elevation="4dp"
+                    android:text="@string/main_play"
+                    android:textAllCaps="true"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:text="БЫСТРЫЕ ДЕЙСТВИЯ"
+                android:textColor="#FFFFF5F7"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <com.kdt.mcgui.LauncherMenuButton
+                    android:id="@+id/custom_control_button"
+                    style="@style/LauncherMenuButton.Universal"
+                    android:layout_width="0dp"
+                    android:layout_height="82dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/bg_redshift_action"
+                    android:drawableStart="@drawable/ic_menu_custom_controls"
+                    android:drawableTint="#FFFF7185"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:text="@string/mcl_option_customcontrol"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="12sp" />
+
+                <com.kdt.mcgui.LauncherMenuButton
+                    android:id="@+id/install_jar_button"
+                    style="@style/LauncherMenuButton.Universal"
+                    android:layout_width="0dp"
+                    android:layout_height="82dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/bg_redshift_action"
+                    android:drawableStart="@drawable/ic_menu_install_jar"
+                    android:drawableTint="#FFFF7185"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:text="@string/main_install_jar_file"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.kdt.mcgui.LauncherMenuButton
+                    android:id="@+id/language_button"
+                    style="@style/LauncherMenuButton.Universal"
+                    android:layout_width="0dp"
+                    android:layout_height="82dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/bg_redshift_action"
+                    android:drawableStart="@drawable/ic_language"
+                    android:drawableTint="#FFFF7185"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:text="@string/force_minecraft_language"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="12sp" />
+
+                <com.kdt.mcgui.LauncherMenuButton
+                    android:id="@+id/open_files_button"
+                    style="@style/LauncherMenuButton.Universal"
+                    android:layout_width="0dp"
+                    android:layout_height="82dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
+                    android:background="@drawable/bg_redshift_action"
+                    android:drawableStart="@drawable/ic_folder"
+                    android:drawableTint="#FFFF7185"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:text="@string/mcl_button_open_directory"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <com.kdt.mcgui.LauncherMenuButton
+                android:id="@+id/share_logs_button"
+                style="@style/LauncherMenuButton.Universal"
+                android:layout_width="match_parent"
+                android:layout_height="62dp"
+                android:layout_margin="5dp"
+                android:background="@drawable/bg_redshift_action"
+                android:drawableStart="@android:drawable/ic_menu_share"
+                android:drawableTint="#FFFF7185"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:text="@string/main_share_logs"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
+"""
+
+landscape_layout = r"""<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_menu_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app"
+    android:orientation="horizontal"
+    android:padding="18dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1.08"
+        android:orientation="vertical"
+        android:paddingEnd="18dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="REDSHIFT  /  GAME CENTER"
+            android:textColor="#FFFF637C"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="9dp"
+            android:text="Твой мир.\nТвой следующий шаг."
+            android:textColor="#FFFFF5F7"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="7dp"
+            android:text="Всё нужное для Minecraft — под рукой."
+            android:textColor="#FFB9AAB0"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="БЫСТРЫЕ ДЕЙСТВИЯ"
+            android:textColor="#FFFFF5F7"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <com.kdt.mcgui.LauncherMenuButton
+                android:id="@+id/custom_control_button"
+                style="@style/LauncherMenuButton.Universal"
+                android:layout_width="0dp"
+                android:layout_height="76dp"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_redshift_action"
+                android:drawableStart="@drawable/ic_menu_custom_controls"
+                android:drawableTint="#FFFF7185"
+                android:paddingStart="10dp"
+                android:text="@string/mcl_option_customcontrol"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="11sp" />
+
+            <com.kdt.mcgui.LauncherMenuButton
+                android:id="@+id/install_jar_button"
+                style="@style/LauncherMenuButton.Universal"
+                android:layout_width="0dp"
+                android:layout_height="76dp"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_redshift_action"
+                android:drawableStart="@drawable/ic_menu_install_jar"
+                android:drawableTint="#FFFF7185"
+                android:paddingStart="10dp"
+                android:text="@string/main_install_jar_file"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.kdt.mcgui.LauncherMenuButton
+                android:id="@+id/language_button"
+                style="@style/LauncherMenuButton.Universal"
+                android:layout_width="0dp"
+                android:layout_height="76dp"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_redshift_action"
+                android:drawableStart="@drawable/ic_language"
+                android:drawableTint="#FFFF7185"
+                android:paddingStart="10dp"
+                android:text="@string/force_minecraft_language"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="11sp" />
+
+            <com.kdt.mcgui.LauncherMenuButton
+                android:id="@+id/open_files_button"
+                style="@style/LauncherMenuButton.Universal"
+                android:layout_width="0dp"
+                android:layout_height="76dp"
+                android:layout_weight="1"
+                android:layout_margin="4dp"
+                android:background="@drawable/bg_redshift_action"
+                android:drawableStart="@drawable/ic_folder"
+                android:drawableTint="#FFFF7185"
+                android:paddingStart="10dp"
+                android:text="@string/mcl_button_open_directory"
+                android:textAllCaps="false"
+                android:textColor="#FFFFF5F7"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <com.kdt.mcgui.LauncherMenuButton
+            android:id="@+id/share_logs_button"
+            style="@style/LauncherMenuButton.Universal"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_margin="4dp"
+            android:background="@drawable/bg_redshift_action"
+            android:drawableStart="@android:drawable/ic_menu_share"
+            android:drawableTint="#FFFF7185"
+            android:paddingStart="12dp"
+            android:text="@string/main_share_logs"
+            android:textAllCaps="false"
+            android:textColor="#FFFFF5F7"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.92"
+        android:background="@drawable/bg_redshift_hero"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LAUNCH CONTROL"
+            android:textColor="#FFFF7185"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="ВЫБРАННАЯ СБОРКА"
+            android:textColor="#FFB9AAB0"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.kdt.mcgui.mcVersionSpinner
+                android:id="@+id/mc_version_spinner"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_redshift_surface"
+                android:paddingStart="10dp"
+                android:paddingEnd="8dp"
+                android:drawableEnd="@drawable/spinner_arrow"
+                app:drawableEndPadding="5dp"
+                app:drawableEndSize="14dp"
+                app:drawableStartIntegerScaling="true"
+                app:drawableStartSize="30dp" />
+
+            <ImageButton
+                android:id="@+id/edit_profile_button"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginStart="7dp"
+                android:background="@drawable/bg_redshift_action"
+                android:contentDescription="Настроить сборку"
+                android:padding="13dp"
+                android:src="@drawable/ic_edit_profile"
+                android:tint="#FFFF7185" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Выбери профиль, проверь версию и запускай игру."
+            android:textColor="#FFB9AAB0"
+            android:textSize="11sp" />
+
+        <com.kdt.mcgui.MineButton
+            android:id="@+id/play_button"
+            android:layout_width="match_parent"
+            android:layout_height="66dp"
+            android:layout_marginTop="22dp"
+            android:background="@drawable/bg_redshift_play"
+            android:elevation="4dp"
+            android:text="@string/main_play"
+            android:textAllCaps="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>
+"""
+
+activity_layout = r"""<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_app">
+
+    <LinearLayout
+        android:id="@+id/redshift_top_area"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#10090D"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:contentDescription="REDSHIFT"
+                android:src="@drawable/ic_redshift_mark" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="11dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="REDSHIFT"
+                    android:textColor="#FFFFF5F7"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MINECRAFT JAVA LAUNCHER"
+                    android:textColor="#FFFF7185"
+                    android:textSize="8sp"
+                    android:letterSpacing="0.13" />
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/setting_button"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_redshift_action"
+                android:contentDescription="Настройки"
+                android:padding="11dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_menu_settings"
+                android:tint="#FFFF9BAA" />
+        </LinearLayout>
+
+        <com.kdt.mcgui.mcAccountSpinner
+            android:id="@+id/account_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_redshift_surface"
+            android:dropDownWidth="280dp"
+            android:dropDownVerticalOffset="48dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+    </LinearLayout>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/container_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/redshift_top_area"
+        app:layout_constraintBottom_toTopOf="@id/progress_layout" />
+
+    <com.kdt.mcgui.ProgressLayout
+        android:id="@+id/progress_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+"""
+
+(RES / "layout/fragment_launcher.xml").write_text(portrait_layout, encoding="utf-8")
+(RES / "layout-land/fragment_launcher.xml").write_text(landscape_layout, encoding="utf-8")
+(RES / "layout/activity_pojav_launcher.xml").write_text(activity_layout, encoding="utf-8")
+
+print("REDSHIFT 2.0 dashboard hierarchy replaced: new account header, launch control panel, action grid and landscape split layout.")
