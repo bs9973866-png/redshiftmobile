@@ -229,4 +229,95 @@ if land_layout.exists():
         land_layout.write_text(land_xml, encoding="utf-8")
 
 
-print("REDSHIFT visual assets, adaptive icon, landscape header and Russian labels applied.")
+
+# Replace the inherited flat menu rows with a compact, card-based REDSHIFT dashboard.
+(RES / "drawable/bg_redshift_action.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#33FF4964">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="15dp"/>
+            <solid android:color="#1B1018"/>
+            <stroke android:width="1dp" android:color="#38212D"/>
+        </shape>
+    </item>
+</ripple>
+""", encoding="utf-8")
+(RES / "drawable/bg_redshift_play.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#55FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp"/>
+            <gradient android:angle="0" android:startColor="#FF526B" android:endColor="#D91E43"/>
+            <stroke android:width="1dp" android:color="#FFFF8797"/>
+        </shape>
+    </item>
+</ripple>
+""", encoding="utf-8")
+(RES / "drawable/bg_redshift_surface.xml").write_text("""<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="18dp"/>
+    <solid android:color="#160D14"/>
+    <stroke android:width="1dp" android:color="#38212D"/>
+</shape>
+""", encoding="utf-8")
+
+# Turn the stock button stack into spaced action cards, without changing IDs/listeners.
+menu_style = RES / "values/styles.xml"
+style_text = menu_style.read_text(encoding="utf-8")
+style_text = style_text.replace(
+    '<style name="LauncherMenuButton.Universal" parent="LauncherMenuButton">\n'
+    '        <item name="android:layout_height">@dimen/_66sdp</item>\n'
+    '    </style>',
+    '<style name="LauncherMenuButton.Universal" parent="LauncherMenuButton">\n'
+    '        <item name="android:layout_height">58dp</item>\n'
+    '        <item name="android:layout_marginStart">14dp</item>\n'
+    '        <item name="android:layout_marginEnd">14dp</item>\n'
+    '        <item name="android:layout_marginTop">7dp</item>\n'
+    '        <item name="android:layout_marginBottom">7dp</item>\n'
+    '        <item name="android:background">@drawable/bg_redshift_action</item>\n'
+    '        <item name="android:textColor">#FFF5F7</item>\n'
+    '        <item name="android:textAllCaps">false</item>\n'
+    '        <item name="android:textSize">14sp</item>\n'
+    '        <item name="android:paddingStart">18dp</item>\n'
+    '        <item name="android:paddingEnd">16dp</item>\n'
+    '        <item name="android:drawableTint">#FFFF7185</item>\n'
+    '        <item name="android:elevation">2dp</item>\n'
+    '    </style>'
+)
+menu_style.write_text(style_text, encoding="utf-8")
+
+# Improve vertical dashboard spacing and give the version selector a clear surface.
+portrait = RES / "layout/fragment_launcher.xml"
+p = portrait.read_text(encoding="utf-8")
+p = p.replace('<ScrollView\n\t\tandroid:layout_width="match_parent"', '<ScrollView\n\t\tandroid:clipToPadding="false"\n\t\tandroid:fillViewport="false"\n\t\tandroid:layout_width="match_parent"')
+p = p.replace('android:layout_height="wrap_content">\n\t\t\t<com.kdt.mcgui.LauncherMenuButton',
+              'android:layout_height="wrap_content"\n            android:paddingTop="8dp"\n            android:paddingBottom="10dp">\n\t\t\t<com.kdt.mcgui.LauncherMenuButton', 1)
+p = p.replace('android:background="@android:color/transparent"\n\t\tandroid:drawableEnd="@drawable/spinner_arrow"',
+              'android:background="@drawable/bg_redshift_surface"\n        android:paddingStart="12dp"\n        android:paddingEnd="12dp"\n        android:drawableEnd="@drawable/spinner_arrow"')
+p = p.replace('android:layout_marginHorizontal="@dimen/_17sdp"\n\t\tandroid:layout_marginBottom="@dimen/_15sdp"',
+              'android:layout_marginHorizontal="16dp"\n        android:layout_marginBottom="14dp"\n        android:background="@drawable/bg_redshift_play"\n        android:textColor="#FFFFFFFF"\n        android:textSize="17sp"\n        android:textStyle="bold"\n        android:elevation="5dp"')
+portrait.write_text(p, encoding="utf-8")
+
+# Landscape dashboard gets the same action-card language and a more deliberate bottom dock.
+land = RES / "layout-land/fragment_launcher.xml"
+if land.exists():
+    x = land.read_text(encoding="utf-8")
+    x = x.replace('android:background="@android:color/transparent"\n        android:drawableEnd="@drawable/spinner_arrow"',
+                  'android:background="@drawable/bg_redshift_surface"\n        android:paddingStart="10dp"\n        android:paddingEnd="10dp"\n        android:drawableEnd="@drawable/spinner_arrow"')
+    x = x.replace('android:textAllCaps="true"\n        app:layout_constraintBottom_toBottomOf="@+id/mc_version_spinner"',
+                  'android:textAllCaps="true"\n        android:background="@drawable/bg_redshift_play"\n        android:textColor="#FFFFFFFF"\n        android:textStyle="bold"\n        android:elevation="4dp"\n        app:layout_constraintBottom_toBottomOf="@+id/mc_version_spinner"')
+    land.write_text(x, encoding="utf-8")
+
+# Restyle the account selector and settings control so the app chrome no longer resembles Pojav.
+activity = RES / "layout/activity_pojav_launcher.xml"
+a = activity.read_text(encoding="utf-8")
+a = a.replace('android:layout_height="@dimen/_52sdp"\n\n        android:dropDownWidth',
+              'android:layout_height="@dimen/_48sdp"\n        android:layout_marginStart="14dp"\n        android:layout_marginTop="10dp"\n        android:layout_marginEnd="68dp"\n        android:background="@drawable/bg_redshift_surface"\n        android:paddingStart="12dp"\n        android:paddingEnd="12dp"\n\n        android:dropDownWidth')
+a = a.replace('android:layout_width="@dimen/_52sdp"\n        android:layout_height="@dimen/_52sdp"\n        android:background="?attr/selectableItemBackground"',
+              'android:layout_width="48dp"\n        android:layout_height="48dp"\n        android:layout_marginTop="10dp"\n        android:layout_marginEnd="14dp"\n        android:background="@drawable/bg_redshift_action"')
+a = a.replace('android:paddingVertical="@dimen/_8sdp"\n\n        app:layout_constraintEnd', 'android:padding="12dp"\n        android:tint="#FFFF7185"\n\n        app:layout_constraintEnd')
+a = a.replace('app:layout_constraintTop_toBottomOf="@+id/account_spinner" />',
+              'app:layout_constraintTop_toBottomOf="@+id/account_spinner"\n        android:layout_marginTop="8dp" />')
+activity.write_text(a, encoding="utf-8")
+
+\nprint("REDSHIFT custom dashboard cards, account bar, adaptive icon and branding applied.")
