@@ -1708,6 +1708,7 @@ public final class RedshiftPerformanceEngine {
                     .setPositiveButton("Сохранить и удалить", (confirm, action) -> removeMod(context, profile, jars[which]))
                     .setNegativeButton("Отмена", null)
                     .show())
+                .setNeutralButton("Резервные копии", (dialog, which) -> showBackups(context, profileId))
                 .setNegativeButton("Закрыть", null)
                 .show();
         } catch (Exception e) {
