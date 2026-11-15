@@ -1521,6 +1521,10 @@ import net.kdt.pojavlaunch.modloaders.modpacks.models.ModItem;
 import net.kdt.pojavlaunch.value.launcherprofiles.LauncherProfiles;
 import net.kdt.pojavlaunch.value.launcherprofiles.MinecraftProfile;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -1583,6 +1587,11 @@ public final class RedshiftPerformanceEngine {
                 final int installCount = combined.modsToInstall.size() + combined.dependenciesToInstall.size();
                 final int skippedCount = skipped.size();
                 if (installCount == 0) throw new Exception("Нет новых модов для установки");
+                File modsDir = new File(Tools.getGameDirPath(profile), "mods");
+                if (modsDir.isDirectory()) {
+                    for (ModItem plannedMod : combined.modsToInstall) ensureNoFilenameCollision(modsDir, plannedMod);
+                    for (ModItem plannedMod : combined.dependenciesToInstall) ensureNoFilenameCollision(modsDir, plannedMod);
+                }
                 File backupDir = backupMods(profile, profileId, mcVersion, loader, mode);
                 SingleModInstaller.installModWithDependencies(combined, profileId,
                     () -> Tools.runOnUiThread(() -> Toast.makeText(context,
@@ -1597,6 +1606,14 @@ public final class RedshiftPerformanceEngine {
                 Tools.runOnUiThread(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private static void ensureNoFilenameCollision(File modsDir, ModItem mod) throws IOException {
+        if (mod.fileName == null || mod.fileName.trim().isEmpty()) throw new IOException("У мода отсутствует имя файла");
+        File existing = new File(modsDir, mod.fileName);
+        if (existing.exists()) {
+            throw new IOException("Файл уже существует: " + mod.fileName + ". Ничего не перезаписано — проверь моды вручную.");
+        }
     }
 
     private static File backupMods(MinecraftProfile profile, String profileId, String mcVersion, String loader, int mode) throws IOException {
