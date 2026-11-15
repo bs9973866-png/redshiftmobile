@@ -1525,6 +1525,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -1594,10 +1600,13 @@ public final class RedshiftPerformanceEngine {
                 }
                 File backupDir = backupMods(profile, profileId, mcVersion, loader, mode);
                 SingleModInstaller.installModWithDependencies(combined, profileId,
-                    () -> Tools.runOnUiThread(() -> Toast.makeText(context,
-                        "Готово: установлено " + installCount + " модов" +
-                        (skippedCount > 0 ? ", пропущено несовместимых: " + skippedCount : ""),
-                        Toast.LENGTH_LONG).show()),
+                    () -> {
+                        try { tuneOptions(profile, backupDir, mode); } catch (Exception ignored) { ignored.printStackTrace(); }
+                        Tools.runOnUiThread(() -> Toast.makeText(context,
+                            "Готово: установлено " + installCount + " модов. Настройки графики применены." +
+                            (skippedCount > 0 ? ", пропущено несовместимых: " + skippedCount : ""),
+                            Toast.LENGTH_LONG).show());
+                    },
                     () -> Tools.runOnUiThread(() -> Toast.makeText(context,
                         "Не удалось установить набор оптимизации", Toast.LENGTH_LONG).show())
                 );
@@ -1606,6 +1615,54 @@ public final class RedshiftPerformanceEngine {
                 Tools.runOnUiThread(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
             }
         }).start();
+    }
+
+    private static void tuneOptions(MinecraftProfile profile, File backupDir, int mode) throws IOException {
+        File gameDir = Tools.getGameDirPath(profile);
+        File options = new File(gameDir, "options.txt");
+        if (!options.exists()) return;
+        File backup = new File(backupDir, "options.txt");
+        copyFile(options, backup);
+        Map<String, String> values = new LinkedHashMap<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(options))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                int colon = line.indexOf(':');
+                if (colon > 0) values.put(line.substring(0, colon), line.substring(colon + 1));
+            }
+        }
+        if (mode == 0) {
+            values.put("graphics", "fast");
+            values.put("renderDistance", "6");
+            values.put("simulationDistance", "4");
+            values.put("particles", "0");
+            values.put("cloudStatus", "0");
+            values.put("entityDistanceScaling", "0.5");
+            values.put("biomeBlendRadius", "0");
+        } else if (mode == 1) {
+            values.put("graphics", "fast");
+            values.put("renderDistance", "10");
+            values.put("simulationDistance", "6");
+            values.put("particles", "1");
+            values.put("cloudStatus", "1");
+            values.put("entityDistanceScaling", "0.75");
+            values.put("biomeBlendRadius", "2");
+        } else {
+            values.put("graphics", "fancy");
+            values.put("renderDistance", "14");
+            values.put("simulationDistance", "8");
+            values.put("particles", "2");
+            values.put("cloudStatus", "2");
+            values.put("entityDistanceScaling", "1.0");
+            values.put("biomeBlendRadius", "4");
+        }
+        StringBuilder output = new StringBuilder();
+        for (Map.Entry<String, String> entry : values.entrySet()) {
+            output.append(entry.getKey()).append(':').append(entry.getValue()).append('\\n');
+        }
+        try (FileOutputStream stream = new FileOutputStream(options)) {
+            stream.write(output.toString().getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     private static void ensureNoFilenameCollision(File modsDir, ModItem mod) throws IOException {
